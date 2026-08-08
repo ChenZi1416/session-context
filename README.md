@@ -99,10 +99,10 @@ https://github.com/ChenZi1416/session-context
 ```
 
 
-2.在 WPS 灵犀技能管理界面，点击 **「+ 创建技能」** → **「上传技能」**，导入压缩包（session-context.zip）
+2.在 WPS 灵犀技能管理界面，点击 **「+ 创建技能」** → **「上传技能」**，导入压缩包（**session-context.zip**）
 
 
-3.或将压缩包解压后（解压到 session-context\）整体放入技能目录：
+3.或将压缩包解压后（**解压到 session-context\**）整体放入技能目录：
 
 ```
 C:\Users\<用户名>\AppData\Roaming\WPS 灵犀\serverdir\target_skills\
