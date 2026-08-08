@@ -24,13 +24,14 @@ import kdocs
 # ── 常量 ────────────────────────────────────────────────
 # WPS 云文档有两个云盘："自动上传文档"(API默认) 和 "我的云文档"(用户可见)
 # 必须使用"我的云文档" drive，否则用户在 WPS 客户端看不到文件
-MY_DRIVE_NAME = "我的云文档"
+USER_VISIBLE_DRIVE_NAMES = {"我的云文档", "我的企业文档"}
+HIDDEN_DRIVE_NAMES = {"自动上传文档", "自动备份"}
 MY_DRIVE_ID = None  # 运行时自动解析
 LOCAL_CACHE = Path.home() / ".lingxi-context"
 
 
 def _resolve_my_drive_id():
-    """解析"我的云文档"云盘 ID（kdocs 默认用"自动上传文档"云盘，用户不可见）"""
+    """解析用户可见的云盘 ID（排除 API 默认/备份云盘，兼容个人和企业账号）"""
     global MY_DRIVE_ID
     if MY_DRIVE_ID:
         return MY_DRIVE_ID
@@ -42,15 +43,21 @@ def _resolve_my_drive_id():
     if resp.get("code") != 0:
         raise RuntimeError("无法获取云盘列表")
     items = (resp.get("data") or {}).get("items") or []
+    # 优先匹配已知用户可见云盘名称
     for item in items:
-        if item.get("name") == MY_DRIVE_NAME:
+        if item.get("name") in USER_VISIBLE_DRIVE_NAMES:
             MY_DRIVE_ID = item["id"]
             return MY_DRIVE_ID
-    # fallback: 取第二个云盘（通常第一个是"自动上传文档"）
-    if len(items) >= 2:
-        MY_DRIVE_ID = items[1]["id"]
+    # fallback: 取第一个不在排除列表中的云盘
+    for item in items:
+        if item.get("name") not in HIDDEN_DRIVE_NAMES:
+            MY_DRIVE_ID = item["id"]
+            return MY_DRIVE_ID
+    # 最后兜底: 只有一个云盘直接用
+    if len(items) == 1:
+        MY_DRIVE_ID = items[0]["id"]
         return MY_DRIVE_ID
-    raise RuntimeError(f"未找到'{MY_DRIVE_NAME}'云盘")
+    raise RuntimeError("未找到用户可见的云盘，可用云盘: " + ", ".join(i.get("name", "?") for i in items))
 
 
 def _ensure_cloud_folder():
